@@ -12,7 +12,7 @@ from deap import gp
 from numpy.lib import stride_tricks
 from numpy.ma import masked_invalid
 from scipy.stats.stats import pearsonr
-from Tool.GeneralData import GeneralData
+from tool.GeneralData import GeneralData
 
 
 

@@ -10,8 +10,8 @@ Created on Fri Dec 25 13:35:48 2020
 import os
 import numpy as np
 from copy import copy, deepcopy
-from Tool.GeneralData import GeneralData
-from GeneticPogramming.utils import rowwise_corrcoef, get_residual
+from tool.GeneralData import GeneralData
+from genetic_programming.utils import rowwise_corrcoef, get_residual
 
 
 

@@ -4,9 +4,9 @@ import itertools
 import numpy.random as random
 from inspect import getmembers, isfunction
 
-from GeneticPogramming.primitivefunctions import scalarFunctions, singleDataFunctions, singleDataNFunctions, coupleDataFunctions,coupleDataNFunctions
-# from GeneticPogramming.primitivefunctions import coupleDataNFunctions
-from Tool import GeneralData, Logger
+from genetic_programming.primitivefunctions import scalarFunctions, singleDataFunctions, singleDataNFunctions, coupleDataFunctions,coupleDataNFunctions
+# from genetic_programming.primitivefunctions import coupleDataNFunctions
+from tool import GeneralData, Logger
 
 #%%
 def pset_creator(materialDataNames):
@@ -78,7 +78,7 @@ def pset_creator(materialDataNames):
                                  ret_type=float)
         del gp.EphemeralConstant_int
         pset.addEphemeralConstant(name = 'EphemeralConstant_int',
-                                  ephemeral = lambda: random.randint(2, 5),
+                                  ephemeral = lambda: random.randint(2, 20),
                                   ret_type = int)
         print(str(gp.EphemeralConstant_flaot)+"is already in gp global, we del it and reAdd anyway")
         print(str(gp.EphemeralConstant_int)+"is already in gp global, we del it and reAdd anyway")

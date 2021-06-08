@@ -8,7 +8,7 @@ Created on Tue Dec  8 19:27:20 2020
 
 
 import numpy as np
-from Tool.GeneralData import GeneralData
+from tool.GeneralData import GeneralData
 import copy
 import warnings
 warnings.filterwarnings("ignore")

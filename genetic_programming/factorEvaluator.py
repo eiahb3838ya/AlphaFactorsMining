@@ -14,9 +14,9 @@ import os
 
 import numpy as np
 from copy import copy, deepcopy
-from Tool.GeneralData import GeneralData
+from tool.GeneralData import GeneralData
 import pandas as pd
-from GeneticPogramming.utils import rowwise_corrcoef
+from genetic_programming.utils import rowwise_corrcoef
 from sklearn import metrics
 
 
@@ -24,7 +24,6 @@ from sklearn import metrics
 # evaluate function 评价函数
 def ic_evaluator(factor : GeneralData, shiftedPctChange:GeneralData) -> float:   
     corr_np = rowwise_corrcoef(factor, shiftedPctChange)
-    # print("fail eval {} of {} days".format(corr_np.mask.sum(), shiftedPctChange.generalData.shape[0]))
     if corr_np.mask.sum() > len(corr_np)/2:
         print("trouble factor with unevaluate days {} out of {} days".format(corr_np.mask.sum(), len(corr_np)))
         ic = -1
@@ -83,55 +82,90 @@ def ic_long_ir(factor : GeneralData, shiftedPctChange:GeneralData) -> float:
         return -1000
 
 
-def long_return(factor : GeneralData, shiftedPctChange:GeneralData) -> float:
-    holding_period = 5
-    group_num = 5
-    num_prod = int(len(factor.columnNames)/group_num)
-    backtest_period = factor.timestamp
-    ret = pd.DataFrame(index = backtest_period, columns=np.array(range(1,1+group_num)),dtype='object')
-    for i in range(len(backtest_period)):
-        change_date = backtest_period[i]
-        if np.mod(i,holding_period) == 0:#换仓日,排序记录每组的序号
-            prod_ID_group = dict()
-            rank = np.argsort(-factor.generalData[i, :])  #倒序
-            for group in range(1, group_num):
-                prod_ID_group[group] = rank[(group-1)*num_prod:group*num_prod]
-            prod_ID_group[group_num] = rank[(group_num - 1) * num_prod:]
-        daily_return = shiftedPctChange.generalData[i, :]
-        for group in range(1, group_num + 1):
-            ret.loc[change_date,group] = np.nanmean(daily_return[prod_ID_group[group]])
-    nav = (ret+1).cumprod()
-    total_return = nav.iloc[-1,:]-1
-    return max(total_return.iloc[0],total_return.iloc[group_num-1])
-    # return (((total_return.iloc[0]+1)*1/3)-1)
+# def long_return(factor : GeneralData, shiftedPctChange:GeneralData) -> float:
+#     holding_period = 5
+#     group_num = 5
+#     num_prod = int(len(factor.columnNames)/group_num)
+#     backtest_period = factor.timestamp
+#     ret = pd.DataFrame(index = backtest_period, columns=np.array(range(1,1+group_num)),dtype='object')
+#     for i in range(len(backtest_period)):
+#         change_date = backtest_period[i]
+#         if np.mod(i,holding_period) == 0:#换仓日,排序记录每组的序号
+#             prod_ID_group = dict()
+#             rank = np.argsort(-factor.generalData[i, :])  #倒序
+#             for group in range(1, group_num):
+#                 prod_ID_group[group] = rank[(group-1)*num_prod:group*num_prod]
+#             prod_ID_group[group_num] = rank[(group_num - 1) * num_prod:]
+#         daily_return = shiftedPctChange.generalData[i, :]
+#         for group in range(1, group_num + 1):
+#             ret.loc[change_date,group] = np.nanmean(daily_return[prod_ID_group[group]])
+#     nav = (ret+1).cumprod()
+#     total_return = nav.iloc[-1,:]-1
+#     return max(total_return.iloc[0],total_return.iloc[group_num-1])
+#     # return (((total_return.iloc[0]+1)*1/3)-1)
 
 
 
 
-def long_short_return(factor : GeneralData, shiftedPctChange:GeneralData) -> float:
-    holding_period = 5
-    group_num = 5
-    num_prod = int(len(factor.columnNames)/group_num)
-    backtest_period = factor.timestamp
-    ret = pd.DataFrame(index = backtest_period, columns=np.array(range(1,1+group_num)),dtype='object')
-    for i in range(len(backtest_period)):
-        change_date = backtest_period[i]
-        if np.mod(i,holding_period) == 0:#换仓日,排序记录每组的序号
-            prod_ID_group = dict()
-            rank = np.argsort(-factor.generalData[i, :])  #倒序
-            for group in range(1, group_num):
-                prod_ID_group[group] = rank[(group-1)*num_prod:group*num_prod]
-            prod_ID_group[group_num] = rank[(group_num - 1) * num_prod:]
-        daily_return = shiftedPctChange.generalData[i, :]
-        for group in range(1, group_num + 1):
-            ret.loc[change_date,group] = np.nanmean(daily_return[prod_ID_group[group]])
-    nav = (ret+1).cumprod()
-    # print(nav)
-    # print(nav.iloc[-1,:])
-    # print('end')
-    # print(nav.iloc[0,:])
-    total_return = nav.iloc[-1,:] - 1
-    return abs(total_return.iloc[0]-total_return.iloc[group_num-1])
+# def long_short_return(factor : GeneralData, shiftedPctChange:GeneralData) -> float:
+#     holding_period = 5
+#     group_num = 5
+#     num_prod = int(len(factor.columnNames)/group_num)
+#     backtest_period = factor.timestamp
+#     ret = pd.DataFrame(index = backtest_period, columns=np.array(range(1,1+group_num)),dtype='object')
+#     for i in range(len(backtest_period)):
+#         change_date = backtest_period[i]
+#         if np.mod(i,holding_period) == 0:#换仓日,排序记录每组的序号
+#             prod_ID_group = dict()
+#             rank = np.argsort(-factor.generalData[i, :])  #倒序
+#             for group in range(1, group_num):
+#                 prod_ID_group[group] = rank[(group-1)*num_prod:group*num_prod]
+#             prod_ID_group[group_num] = rank[(group_num - 1) * num_prod:]
+#         daily_return = shiftedPctChange.generalData[i, :]
+#         for group in range(1, group_num + 1):
+#             ret.loc[change_date,group] = np.nanmean(daily_return[prod_ID_group[group]])
+#     nav = (ret+1).cumprod()
+#     # print(nav)
+#     # print(nav.iloc[-1,:])
+#     # print('end')
+#     # print(nav.iloc[0,:])
+#     total_return = nav.iloc[-1,:] - 1
+#     return abs(total_return.iloc[0]-total_return.iloc[group_num-1])
+
+def long_return(factor : GeneralData, layerNum:int, price: GeneralData )-> float:
+    factor_df = factor.to_DataFrame()
+    factorRank = factor_df.rank(axis=1, method='dense')
+    groupCumRts = pd.DataFrame(index = factorRank.index)
+    groupRts = pd.DataFrame(index = factorRank.index)
+    price_df = price.to_DataFrame()
+    rts = price_df / price_df.shift(1) - 1
+    for layerIdx in range(1, layerNum + 1):
+        groupName = 'group%s' % layerIdx
+        groupPosition = pd.DataFrame(data=np.zeros(factorRank.shape), index=factorRank.index,
+                                     columns=factorRank.columns)
+        if factorRank.max(skipna=True).max(skipna=True) < layerNum:
+            print('Number of Layers Excess Number of Ranks.')
+            return 0
+        elif factorRank.max(skipna=True).max(skipna=True) == layerNum:
+            groupPosition[factorRank == layerIdx] = 1
+        else:
+            groupPosition[
+                (factorRank.sub(factorRank.max(axis=1) * (layerIdx - 1) / layerNum, axis=0) > 0) &
+                (factorRank.sub(factorRank.max(axis=1) * layerIdx / layerNum, axis=0) <= 0)] = 1
+
+        groupRts[groupName] = np.hstack(
+                (0, 
+                 (np.nansum(groupPosition.iloc[:-1, :].values * rts.iloc[1:, :].values, axis=1) / 
+                  groupPosition.iloc[:-1, :].sum(axis=1)))
+            )
+        groupCumRts[groupName] = (1 + groupRts[groupName]).cumprod() - 1
+    if groupCumRts.iloc[-1, 0] < groupCumRts.iloc[-1, -1]:
+        factorMode = 1
+        return (groupCumRts.iloc[-1,-1]*(250/np.shape(groupRts)[0]))
+    else:
+        factorMode = -1
+        return (groupCumRts.iloc[-1,0]*(250/np.shape(groupRts)[0]))
+
 
 
 def mutual_info(factor : GeneralData, shiftedPctChange:GeneralData) -> float:

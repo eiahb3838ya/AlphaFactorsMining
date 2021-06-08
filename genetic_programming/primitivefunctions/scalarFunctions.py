@@ -6,7 +6,7 @@ Created on Mon Dec  7 17:49:25 2020
 
 """
 import numpy as np
-from Tool.GeneralData import GeneralData
+from tool.GeneralData import GeneralData
 import copy
 
 import warnings

@@ -6,6 +6,7 @@ Created on Tue Jan 26 14:06:31 2021
 """
 
 #%% import
+PROJECT_ROOT = "D:\work\\tianfeng\\AlphaFactorsMining"
 import sys
 import os
 import ray
@@ -18,34 +19,32 @@ import pandas as pd
 from datetime import datetime
 from deap import base, creator, gp, tools
 from functools import partial
+
 try:
-    from GeneticPogramming.psetCreator import pset_creator
-    from GeneticPogramming.rayMapper import ray_deap_map
-    from GeneticPogramming.evalAlgorithm import preprocess_eval_single_period
-    from GeneticPogramming.evolutionAlgorithm import easimple
-    from GeneticPogramming.factorEvaluator import ic_evaluator, icir_evaluator, long_return, mutual_info,ic_long_ir
-    from GeneticPogramming.utils import  compileFactor
+    from genetic_programming.psetCreator import pset_creator
+    from genetic_programming.rayMapper import ray_deap_map
+    from genetic_programming.evalAlgorithm import preprocess_eval_single_period
+    from genetic_programming.evolutionAlgorithm import easimple
+    from genetic_programming.factorEvaluator import ic_evaluator, icir_evaluator, long_return, mutual_info,ic_long_ir
+    from genetic_programming.utils import  compileFactor
     from Tool import Logger, GeneralData, Factor
     from GetData import load_data, align_all_to
 except :
     # 如果import 失敗的話 可能是因為 working directory 不在最上層
-    PROJECT_ROOT = 'F:\Keira\AlphaSignalFromMachineLearning'
     os.chdir(PROJECT_ROOT)
     print("change wd to {}".format(PROJECT_ROOT))
-    from GeneticPogramming.psetCreator import pset_creator
-    from GeneticPogramming.rayMapper import ray_deap_map
-    from GeneticPogramming.evalAlgorithm import preprocess_eval_single_period
-    from GeneticPogramming.evolutionAlgorithm import easimpl
-    from GeneticPogramming.factorEvaluator import ic_evaluator, icir_evaluator, long_return
-    from GeneticPogramming.utils import compileFactor
-    from Tool import Logger, GeneralData, Factor
-    from GetData import load_data, align_all_to
+    from genetic_programming.psetCreator import pset_creator
+    from genetic_programming.rayMapper import ray_deap_map
+    from genetic_programming.evalAlgorithm import preprocess_eval_single_period
+    from genetic_programming.evolutionAlgorithm import easimple
+    from genetic_programming.factorEvaluator import ic_evaluator, icir_evaluator, long_return
+    from genetic_programming.utils import compileFactor
+    from tool import Logger, GeneralData, Factor
+    from get_data import load_data, align_all_to
 
 # use up to 16 core as limit
 os.environ['NUMEXPR_MAX_THREADS'] = '16'
 #%% set parameters 挖因子過程參數
-PROJECT_ROOT = 'F:\\Keira\AlphaSignalFromMachineLearning'
-
 # data path to save factors 用來儲存挖到的因子的路徑
 FACTOR_PATH = os.path.join(PROJECT_ROOT,"data\\factors")
 
@@ -57,7 +56,7 @@ PERIOD_END = "2018-01-01"
 ITERTIMES = 1
 
 # core count to use in multiprocessing 多進程使用的邏輯數
-POOL_SIZE = 4
+POOL_SIZE = 8
 
 # 以及這次使用的適應度，適應度函數在別的地方定義
 EVALUATE_FUNC = long_return
@@ -179,7 +178,7 @@ toolbox.register("mutate", multi_mutate, expr=toolbox.expr_mut, pset=pset)
 
 # use ray to implement multiprocess
 # 這裡用的是 ray 包的多進程，會自動生成 Actors 然後進行計算，我們向上封裝成 map (好用) 爽
-# 定義在GeneticPogramming.rayMapper
+# 定義在genetic_programming.rayMapper
 # 如果換成一般的 map 或是 multiprocess.map 也可以跑，很慢
 # 可見 single process version
 toolbox.register("map", ray_deap_map, creator_setup=creator_setup,
@@ -247,13 +246,7 @@ def main():
     barraDict = {k:globalVars.barra[k] for k in barraNames} # only take the data specified in barraNames
     toRegFactorDict = {}
 
-    # h5_path = "F:\\Keira\\AlphaSignalFromMachineLearning\\Data\\h5"
-    # hdf = pd.HDFStore(os.path.join(h5_path, '{}.h5'.format("industry")))
-    # for k in hdf.keys():
-    #     tmp = pd.concat([hdf.get(k)] * len(date_range_s), axis=1).T
-    #     tmp.index = date_range_s
-    #     toRegFactorDict[k] = GeneralData(k, tmp)
-    #
+
     # get the return to compare 
     # 定義用來放進 evaluation function 的 收益率
     open_ = globalVars.materialData['open']
@@ -353,7 +346,7 @@ def main():
 
 #%% main
 if __name__ == '__main__':
-    from Tool import globalVars
+    from tool import globalVars
     main()
     
 

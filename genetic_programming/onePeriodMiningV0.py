@@ -6,6 +6,7 @@ Created on Tue Jan 26 14:06:31 2021
 """
 
 #%% import
+PROJECT_ROOT = "D:\work\\tianfeng\\AlphaFactorsMining"
 import sys
 import os
 import ray
@@ -17,32 +18,32 @@ from datetime import datetime
 from deap import base, creator, gp, tools
 from functools import partial
 try:
-    from GeneticPogramming.psetCreator import pset_creator
-    from GeneticPogramming.rayMapper import ray_deap_map
-    from GeneticPogramming.evalAlgorithm import preprocess_eval_single_period
-    from GeneticPogramming.evolutionAlgorithm import easimple
-    from GeneticPogramming.factorEvaluator import ic_evaluator, icir_evaluator,long_short_return
-    from GeneticPogramming.utils import  compileFactor
+    from genetic_programming.psetCreator import pset_creator
+    from genetic_programming.rayMapper import ray_deap_map
+    from genetic_programming.evalAlgorithm import preprocess_eval_single_period
+    from genetic_programming.evolutionAlgorithm import easimple
+    from genetic_programming.factorEvaluator import ic_evaluator, icir_evaluator, long_return, mutual_info,ic_long_ir
+    from genetic_programming.utils import  compileFactor
     from Tool import Logger, GeneralData, Factor
-    from GetData import load_data, align_all_to
+    from get_data import load_data, align_all_to
 except :
     # 如果import 失敗的話 可能是因為 working directory 不在最上層
-    PROJECT_ROOT = 'F:\\Keira\AlphaSignalFromMachineLearning'
     os.chdir(PROJECT_ROOT)
     print("change wd to {}".format(PROJECT_ROOT))
-    from GeneticPogramming.psetCreator import pset_creator
-    from GeneticPogramming.rayMapper import ray_deap_map
-    from GeneticPogramming.evalAlgorithm import preprocess_eval_single_period
-    from GeneticPogramming.evolutionAlgorithm import easimple
-    from GeneticPogramming.factorEvaluator import ic_evaluator, icir_evaluator,long_return,long_short_return
-    from GeneticPogramming.utils import compileFactor
-    from Tool import Logger, GeneralData, Factor
-    from GetData import load_data, align_all_to
+    from genetic_programming.psetCreator import pset_creator
+    from genetic_programming.rayMapper import ray_deap_map
+    from genetic_programming.evalAlgorithm import preprocess_eval_single_period
+    from genetic_programming.evolutionAlgorithm import easimple
+    from genetic_programming.factorEvaluator import ic_evaluator, icir_evaluator, long_return, mutual_info,ic_long_ir
+    from genetic_programming.utils import  compileFactor
+
+    from tool import Logger, GeneralData, Factor
+    from get_data import load_data, align_all_to
 
 # use up to 16 core as limit
 os.environ['NUMEXPR_MAX_THREADS'] = '16'
 #%% set parameters 挖因子過程參數
-PROJECT_ROOT = 'F:\\Keira\AlphaSignalFromMachineLearning'
+
 
 # data path to save factors 用來儲存挖到的因子的路徑
 FACTOR_PATH = os.path.join(PROJECT_ROOT,"data\\factors")
@@ -52,20 +53,20 @@ PERIOD_START = "2017-01-01"
 PERIOD_END = "2019-01-01"
 
 # the total iteration times in this process 總共要輪迴幾次
-ITERTIMES = 30
-
+ITERTIMES = 1
+ 
 # core count to use in multiprocessing 多進程使用的邏輯數
-POOL_SIZE = 4
+POOL_SIZE = 5
 
 # 以及這次使用的適應度，適應度函數在別的地方定義
-EVALUATE_FUNC = long_short_return
+EVALUATE_FUNC = long_return
 #%% hyperparameters 魔仙超參數
 
 # population count in initialization and each selection period 初始化的 種群 個體數
 N_POP = 100
 
 # max generation in one iteration 最多繁衍的代數
-N_GEN = 7
+N_GEN = 50
 
 # cross probability 交叉的機率
 CXPB = 0.6
@@ -173,7 +174,7 @@ toolbox.register("mutate", multi_mutate, expr=toolbox.expr_mut, pset=pset)
 
 # use ray to implement multiprocess
 # 這裡用的是 ray 包的多進程，會自動生成 Actors 然後進行計算，我們向上封裝成 map (好用) 爽
-# 定義在GeneticPogramming.rayMapper
+# 定義在geneticPogramming.rayMapper
 # 如果換成一般的 map 或是 multiprocess.map 也可以跑，很慢
 # 可見 single process version
 toolbox.register("map", ray_deap_map, creator_setup=creator_setup,
@@ -191,7 +192,7 @@ mstats.register("max", np.max)
 #%% define main 
 def main():
     random.seed(318)
-    ray.init(num_cpus=POOL_SIZE, ignore_reinit_error=True, local_mode=True, log_to_driver=True)
+    ray.init(num_cpus=POOL_SIZE, ignore_reinit_error=True, local_mode=False, log_to_driver=True)
     logbook = tools.Logbook()
     
     # make a new folder 替每次實驗都產生一個文件夾，內含合格的因子，以及最高分的因子(如果 iter 結束都沒找到合格因子)
@@ -234,11 +235,16 @@ def main():
     # 定義用來放進 evaluation function 的 收益率
     open_ = globalVars.materialData['open']
     shiftedPctChange_df = open_.to_DataFrame().pct_change().shift(-2) #使用後天到明天開盤價的 pctChange 作為 收益率
+    open_shift_df  = globalVars.materialData['open'].to_DataFrame().shift(-1)
     
     # align data within shiftedPctChange_df data
     # 將所有數據與 收益率數據對齊
     periodShiftedPctChange_df = shiftedPctChange_df.loc[PERIOD_START:PERIOD_END]
     periodShiftedPctChange = GeneralData('periodShiftedPctChange_df', periodShiftedPctChange_df)
+
+    periodOpen_shift_df = open_shift_df.loc[PERIOD_START:PERIOD_END]
+    periodOpen_shift = GeneralData('periodOpen_shift_df',periodOpen_shift_df)
+
     periodMaterialDataDict = align_all_to(materialDataDict, periodShiftedPctChange)
     periodBarraDict = align_all_to(barraDict, periodShiftedPctChange)
     del shiftedPctChange_df, periodShiftedPctChange_df
@@ -263,7 +269,7 @@ def main():
         materialDataDictID = materialDataDictID,
         barraStackID = barraStackID,
         toRegFactorStackID = toRegFactorStackID,
-        factorEvalFunc = partial(EVALUATE_FUNC, shiftedPctChange = periodShiftedPctChange),
+        factorEvalFunc = partial(EVALUATE_FUNC, layerNum=10, price = periodOpen_shift),
         pset = pset
     )
     
@@ -307,7 +313,7 @@ def main():
                 materialDataDictID = materialDataDictID,
                 barraStackID = barraStackID,
                 toRegFactorStackID = toRegFactorStackID,
-                factorEvalFunc = partial(EVALUATE_FUNC, shiftedPctChange = periodShiftedPctChange),
+                factorEvalFunc = partial(EVALUATE_FUNC,  layerNum=10, price = periodOpen_shift),
                 pset = pset
             )
             continue;
@@ -328,7 +334,7 @@ def main():
 
 #%% main
 if __name__ == '__main__':
-    from Tool import globalVars
+    from tool import globalVars
     main()
     
 

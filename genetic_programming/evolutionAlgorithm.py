@@ -8,44 +8,19 @@ Created on Tue Jan 26 14:54:46 2021
 from time import time
 import numpy.random as random
 from deap import tools
-from scipy.stats import rankdata
-import pandas as pd
+import numpy as np
 
 #%% easimple
 def easimple(toolbox, stats, logbook, evaluate, logger,\
              N_POP = 100, N_GEN = 7, CXPB = 0.6, MUTPB = 0.2):
-    # pop = toolbox.population(n = N_POP)
+    pop = toolbox.population(n = N_POP)
 
-    # tic = time()
-    # logger.info('start easimple at {:.2f}'.format(tic))
-    # logger.info('evaluating initial pop......start')
+    tic = time()
+    logger.info('start easimple at {:.2f}'.format(tic))
+    logger.info('evaluating initial pop......start')
 
     # 對初始種群進行適應度評價 
-    # fitnesses = toolbox.map(evaluate, pop)
-
-    times = 2
-    POP = list()
-    Fitnesses = list()
-    for i in range(times):
-        pop = toolbox.population(n=N_POP)
-        POP = POP + pop
-
-        tic = time()
-        logger.info('start easimple at {:.2f} the {}th times' .format(tic, i))
-        logger.info('evaluating initial pop......start')
-
-        # 對初始種群進行適應度評價
-        fitnesses = toolbox.map(evaluate, pop)
-        Fitnesses = Fitnesses + fitnesses
-    Fitnesses_for_rank = [-abs(fit[0]) for fit in Fitnesses]  # 都变为负的，因为rankdata是从小到大排序，但是我们希望最大的为1
-    rank = rankdata(Fitnesses_for_rank)
-    summary = pd.DataFrame([Fitnesses, rank, POP], index=['Fitness', 'rank', 'POP']).T
-    pop = list(summary.loc[summary['rank'] <= N_POP, 'POP'].values)
-    fitnesses = list(summary.loc[summary['rank'] <= N_POP, 'Fitness'].values)
-
-
-
-
+    fitnesses = toolbox.map(evaluate, pop)    
         
     for i, (ind, fit) in enumerate(zip(pop, fitnesses)):
         # 將適應度給他成績單
@@ -83,7 +58,7 @@ def easimple(toolbox, stats, logbook, evaluate, logger,\
         fitnesses = toolbox.map(evaluate, invalid_ind)   
         for i, (ind, fit) in enumerate(zip(invalid_ind, fitnesses)):
             ind.fitness.values = fit
-            if(fit[0]>0.4):
+            if(fit[0]>0.5):
                 # get something useful
                 # 找到合格的因子
                 logger.info('got a expr useful in gen:{}, end gp algorithm'.format(gen))
@@ -98,6 +73,10 @@ def easimple(toolbox, stats, logbook, evaluate, logger,\
         # 记录数据
         record = stats.compile(pop)
         logger.info("The {} th record:{}".format(gen, str(record)))
+        logger.info("The {} th min:{}".format(gen, str(np.nanmin([i.fitness.values for i in pop]))))
+        logger.info("The {} th max:{}".format(gen, str(np.nanmax([i.fitness.values for i in pop]))))
+        logger.info("The {} th avg:{}".format(gen, str(np.nanmean([i.fitness.values for i in pop]))))
+        logger.info("The {} th std:{}".format(gen, str(np.nanstd([i.fitness.values for i in pop]))))
         logbook.record(gen=gen, **record)
     ind = tools.selBest(offspring, 1, fit_attr='fitness')[0]
     logger.info('none expr useful, terminate easimple')

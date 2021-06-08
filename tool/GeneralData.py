@@ -8,7 +8,7 @@ Created on Tue Dec  1 15:24:11 2020
 # use python -m Factor is the standard way to call modules main function
 
 try:
-    from Tool.GeneralDataBase import GeneralDataBase
+    from tool.GeneralDataBase import GeneralDataBase
     # print('from Tool.GeneralDataBase import GeneralDataBase')
 except Exception:
     from GeneralDataBase import GeneralDataBase 

@@ -13,7 +13,7 @@ from deap import gp
 from time import time
 from datetime import datetime
 
-from Tool import Logger
+from tool import Logger
 import logging
 #%%
 # PROJECT_ROOT = 'C:\\Users\\eiahb\\Documents\\MyFiles\\WorkThing\\tf\\01task\\GeneticProgrammingProject\\AlphaSignalFromMachineLearning\\'
@@ -23,7 +23,7 @@ import logging
 # logger = logging.getLogger()
 #%% define how to evaluate
 
-from GeneticPogramming.factorPreprocess import residual_preprocess, MAD_preprocess, standard_scale_preprocess
+from genetic_programming.factorPreprocess import residual_preprocess, MAD_preprocess, standard_scale_preprocess
 
 # evaluate function
 def preprocess_eval_single_period(individual,

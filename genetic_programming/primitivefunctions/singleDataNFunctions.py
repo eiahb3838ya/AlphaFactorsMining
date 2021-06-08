@@ -7,9 +7,9 @@ Created on Tue Dec  8 14:00:18 2020
 """
 
 import numpy as np
-from Tool.GeneralData import GeneralData
+from tool.GeneralData import GeneralData
 import copy
-from GeneticPogramming import utils  # get_strided, get_maskAllNaN
+from genetic_programming import utils  # get_strided, get_maskAllNaN
 
 import warnings
 
